@@ -1,0 +1,68 @@
+﻿@{
+    ViewData["Title"] = "Track Tickets";
+    var tickets = Model as List<Dictionary<string, object>>;
+}
+
+<div class="container mt-5">
+    <h2>Open &amp; In Progress Tickets</h2>
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>Ticket ID</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (tickets != null && tickets.Count > 0)
+            {
+                foreach (var ticket in tickets)
+                {
+                    <tr>
+                        <td>@ticket["ticket_id"]</td>
+                        <td>@ticket["subject"]</td>
+                        <td>@ticket["status"]</td>
+                        <td>@ticket["created_at"]</td>
+                        <td><a href="@Url.Action("Details", "Ticket", new { id = ticket["id"] })" class="btn btn-sm btn-info">View</a>
+                            @if (ticket["status"].ToString() == "open" || ticket["status"].ToString() == "in_progress")
+                            {
+                                <button class="btn btn-sm btn-outline-danger" onclick="cancelTicket('@ticket["id"]')">Cancel</button>
+                            }
+                        </td>
+                        
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="5" class="text-center">No open or in progress tickets found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+@section Scripts {
+    <script>
+        function cancelTicket(id) {
+            if (confirm("Are you sure you want to cancel this ticket?")) {
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Cancel", "Ticket")',
+                    data: { id: id },
+                    success: function(response) {
+                        if (response.success) {
+                            alert("Ticket cancelled.");
+                            location.reload(); // or update row via JS/AJAX
+                        } else {
+                            alert(response.message || "Cancellation failed.");
+                        }
+                    },
+                    error: function() {
+                        alert("Server error, please try again.");
+                    }
+                });
+            }
+        }
+    </script>
+}

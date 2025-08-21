@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Ticket Details";
+    var ticket = Model as Dictionary<string, object>;
+}
+<div class="container mt-5">
+    <h2>Ticket Details</h2>
+    @if (ticket != null)
+    {
+        <div class="card my-4">
+            <div class="card-body">
+                <h5 class="card-title">Subject: @ticket["subject"]</h5>
+                <p><strong>Description:</strong> @ticket["description"]</p>
+                <p><strong>Status:</strong> @ticket["status_name"]</p>
+                <p><strong>Category:</strong> @ticket["category"]</p>
+                <p><strong>Priority:</strong> @ticket["priority"]</p>
+                <p><strong>Created At:</strong> @ticket["created_at"]</p>
+                @if (ticket.ContainsKey("closed_at") && ticket["closed_at"] != null)
+                {
+                    <p><strong>Closed At:</strong> @ticket["closed_at"]</p>
+                }
+                @if (ticket.ContainsKey("attachment") && ticket["attachment"] != null && !string.IsNullOrEmpty(ticket["attachment"].ToString()))
+                {
+                    <p>
+                        <strong>Attachment:</strong>
+                        <a href="@ticket["attachment"]" target="_blank">Download</a>
+                    </p>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">Ticket not found.</div>
+    }
+    <a href="@Url.Action("DashboardIndex", "Dashboard")" class="btn btn-secondary">Back to Dashboard</a>
+</div>

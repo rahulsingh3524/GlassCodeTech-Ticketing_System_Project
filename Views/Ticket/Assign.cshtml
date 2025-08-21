@@ -1,0 +1,37 @@
+﻿@{
+    ViewData["Title"] = "Assign Ticket to Supporter";
+    var supporters = ViewBag.Supporters as List<Dictionary<string, object>>;
+    var priorities = ViewBag.Priorities as List<Dictionary<string, object>>;
+    var ticketId = ViewBag.TicketId;
+}
+<div class="container mt-5">
+    <h2 class="mb-4">Assign Ticket #@ticketId to Supporter</h2>
+    <form method="post" asp-action="AssignTask" asp-controller="Ticket">
+        <input type="hidden" name="ticketId" value="@ticketId" />
+        <div class="mb-3">
+            <label class="form-label">Supporter:</label>
+            <select name="supporterId" class="form-select" required>
+                <option value="">Select Supporter</option>
+                @foreach (var s in supporters)
+                {
+                    <option value="@s["id"]">@s["username"]</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Priority:</label>
+            <select name="priority" class="form-select" required>
+                <option value="">Select Priority</option>
+                @foreach (var p in priorities)
+                {
+                    <option value="@p["priority_code"]">@p["priority_name"]</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Deadline:</label>
+            <input type="date" name="deadline" class="form-control" required min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        </div>
+        <button type="submit" class="btn btn-success">Assign Ticket</button>
+    </form>
+</div>

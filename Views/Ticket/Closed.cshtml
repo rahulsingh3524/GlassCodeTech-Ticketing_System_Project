@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Closed/Resolved Tickets";
+    var tickets = Model as List<Dictionary<string, object>>;
+}
+
+<div class="container mt-5">
+    <h2>Closed &amp; Resolved Tickets</h2>
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>Ticket ID</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Closed At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (tickets != null && tickets.Count > 0)
+            {
+                foreach (var ticket in tickets)
+                {
+                    <tr>
+                        <td>@ticket["ticket_id"]</td>
+                        <td>@ticket["subject"]</td>
+                        <td>@ticket["status"]</td>
+                        <td>@ticket["created_at"]</td>
+                        <td>@ticket["deadline"]</td>
+                     @*    <td>@ticket.ContainsKey("closed_at") ? ticket["closed_at"] : ""</td> *@
+                        <td>
+                            <a href="@Url.Action("Details", "Ticket", new { id = ticket["id"] })" class="btn btn-sm btn-secondary">View</a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="6" class="text-center">No closed or resolved tickets found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

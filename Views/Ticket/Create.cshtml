@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Raise New Ticket";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Raise a New Ticket</h2>
+    <form method="post" asp-action="Create">
+        <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <input type="text" name="subject" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select" required>
+                <option value="">-- Select Category --</option>
+                <option value="Technical">Technical</option>
+                <option value="Billing">Billing</option>
+                <option value="General">General</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Priority</label>
+            <select name="priority" class="form-select" required>
+                <option value="">-- Select Priority --</option>
+                <option value="1">Low</option>
+                <option value="2">Mid</option>
+                <option value="3">High</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Submit Ticket</button>
+    </form>
+</div>

@@ -1,0 +1,127 @@
+﻿@{
+    ViewData["Title"] = "Supporter Dashboard";
+    var tickets = ViewBag.Tickets as List<Dictionary<string, object>>;
+    var statusCounts = ViewBag.StatusCounts as List<Dictionary<string, object>>;
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Supporter Dashboard</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm p-3 mb-3">
+                <h5>Tickets Assigned</h5>
+                <h3 class="text-info">@((tickets != null) ? tickets.Count : 0)</h3>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow-sm p-3 mb-3">
+                <h5>Ticket Status Summary</h5>
+                <ul class="list-group">
+                    @if (statusCounts != null)
+                    {
+                        foreach (var row in statusCounts)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @row["status_name"]
+                                <span class="badge bg-secondary">@row["count"]</span>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <h4>My Assigned Tickets</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Ticket ID</th>
+                <th>Subject</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Deadline</th>
+                <th>View</th>
+                <th>Change Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (tickets != null && tickets.Count > 0)
+            {
+                foreach (var ticket in tickets)
+                {
+                    <tr>
+                        <td>@ticket["ticket_id"]</td>
+                        <td>@ticket["subject"]</td>
+                        <td>@ticket["customer_name"]</td>
+                        <td>@ticket["status"]</td>
+                        <td>@ticket["priority"]</td>
+                        <td>@ticket["deadline"]</td>
+                        <td>
+                            <a href="@Url.Action("Details", "Ticket", new { id = ticket["id"] })" class="btn btn-sm btn-outline-info">View</a>
+                        </td>
+                        <td>
+                            @{
+                                var status = ticket["status"].ToString().ToLower();
+                            }
+                            @if (status == "open" || status == "in_progress")
+                            {
+                                <select id="status_@ticket["id"]" class="form-select d-inline w-auto">
+                                    <option value="">Change Status</option>
+                                    <option value="3">Resolved</option>
+                                    <option value="4">Closed</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        onclick="changeTicketStatus(@ticket["id"])">
+                                    Update
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Finalized</span>
+                            }
+                        </td>
+
+
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="7" class="text-center">No tickets assigned to you.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+@section Scripts {
+    <script>
+        function changeTicketStatus(ticketId) {
+            var dropdown = document.getElementById('status_' + ticketId);
+            var newStatus = dropdown.value;
+            if (!newStatus) {
+                alert("Please select a status to update.");
+                return;
+            }
+            if (!confirm("Change status of this ticket?")) return;
+
+            $.ajax({
+                url: '@Url.Action("ChangeStatus", "Ticket")',
+                type: 'POST',
+                data: { ticketId: ticketId, newStatus: newStatus },
+                success: function(response) {
+                    if (response.success) {
+                        // Optionally update status and controls live
+                        location.reload(); // simplest way (or refresh just the cell with JS)
+                    } else {
+                        alert(response.message || "Status not changed.");
+                    }
+                },
+                error: function() {
+                    alert("Error changing status. Please try again.");
+                }
+            });
+        }
+    </script>
+}

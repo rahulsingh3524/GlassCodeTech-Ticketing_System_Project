@@ -7,4 +7,13 @@
     <RootNamespace>GlassCodeTech_Ticketing_System_Project</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\attachments\" />
+  </ItemGroup>
+
 </Project>

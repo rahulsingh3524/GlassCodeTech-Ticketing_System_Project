@@ -1,7 +1,20 @@
+using GlassCodeTech_Ticketing_System_Project.Services;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register IHttpContextAccessor for CookieService
+builder.Services.AddHttpContextAccessor();
+
+// Register DatabaseHelper and CookieService
+builder.Services.AddScoped<DatabaseHelper>();
+builder.Services.AddScoped<CookieService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<NotificationService>();
+
 
 var app = builder.Build();
 
@@ -22,6 +35,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Login}/{action=Login}/{id?}");
 
 app.Run();

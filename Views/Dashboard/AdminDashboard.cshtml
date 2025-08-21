@@ -1,0 +1,148 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+    var assignments = ViewBag.AssignmentList as List<Dictionary<string, object>>;
+    var statusCounts = ViewBag.StatusCounts as List<Dictionary<string, object>>;
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Admin Dashboard</h2>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm p-3 mb-3">
+                <h5>Total Tickets Raised</h5>
+                <h3 class="text-primary">@ViewBag.TotalTickets</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm p-3 mb-3">
+                <h5>Total Tickets Assigned</h5>
+                <h3 class="text-info">@ViewBag.AssignedTickets</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm p-3 mb-3">
+                <h5>Ticket Status Summary</h5>
+                <ul class="list-group">
+                    @if (statusCounts != null)
+                    {
+                        foreach (var row in statusCounts)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @row["status_name"]
+                                <span class="badge bg-secondary">@row["count"]</span>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h4>Tickets Assigned to Supporters</h4>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Ticket ID</th>
+                    <th>Subject</th>
+                    <th>Supporter</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Deadline</th>
+                    <th>View</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (assignments != null && assignments.Count > 0)
+                {
+                    foreach (var ticket in assignments)
+                    {
+                        <tr>
+                            <td>@ticket["ticket_id"]</td>
+                            <td>@ticket["subject"]</td>
+                            <td>@ticket["supporter_name"]</td>
+                            <td>@ticket["status"]</td>
+                            <td>@ticket["priority"]</td>
+                            <td>@ticket["deadline"]</td>
+                            <td>
+                                <a href="@Url.Action("Details", "Ticket", new { id = ticket["id"] })" class="btn btn-sm btn-outline-info">View</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="7" class="text-center">No assignments found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @{
+        var allTickets = ViewBag.AllTickets as List<Dictionary<string, object>>;
+    }
+    <h4 class="mt-4">All Tickets</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Ticket ID</th>
+                <th>Subject</th>
+                <th>Supporter</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Deadline</th>
+                <th>Assign</th>
+                <th>View</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (allTickets != null && allTickets.Count > 0)
+            {
+                foreach (var ticket in allTickets)
+                {
+                    // Lowercase for comparison
+                    string status = ticket["status"].ToString().ToLower();
+                    string supporterName = ticket["supporter_name"].ToString();
+
+                    // Only allow assign or reassign if ticket is open or in_progress
+                    bool canAssign = status == "open" || status == "in_progress";
+
+                    <tr>
+                        <td>@ticket["ticket_id"]</td>
+                        <td>@ticket["subject"]</td>
+                        <td>@supporterName</td>
+                        <td>@ticket["status"]</td>
+                        <td>@ticket["priority"]</td>
+                        <td>@ticket["deadline"]</td>
+                        <td>
+                            @if (canAssign && supporterName == "Unassigned")
+                            {
+                                <a href="@Url.Action("Assign", "Ticket", new { ticketId = ticket["id"] })"
+                                   class="btn btn-sm btn-outline-success">Assign</a>
+                            }
+                            else if (canAssign && supporterName != "Unassigned")
+                            {
+                                <a href="@Url.Action("Assign", "Ticket", new { ticketId = ticket["id"] })"
+                                   class="btn btn-sm btn-outline-warning">Reassign</a>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-outline-secondary" disabled>Not Assignable</button>
+                            }
+                        </td>
+                        <td>
+                            <a href="@Url.Action("Details", "Ticket", new { id = ticket["id"] })"
+                               class="btn btn-sm btn-outline-info">View</a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="8" class="text-center">No tickets found.</td></tr>
+            }
+        </tbody>
+    </table>
+
+
+</div>
