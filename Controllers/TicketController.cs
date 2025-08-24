@@ -62,6 +62,7 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                 attachmentPath = "/attachments/" + uniqueFileName;
             }
 
+
             // Insert ticket into database
             var parameters = new SqlParameter[]
             {
