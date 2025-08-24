@@ -213,24 +213,38 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
         };
                 _databaseHelper.ExecuteStoredProcedure("sp_AdminChangeTicketStatus", parameters);
 
-                // **Notify customer of status change**
+                // Get ticket info (for customer notification and admin details)
                 var ticketInfo = _databaseHelper.ExecuteStoredProcedure("sp_GetTicketParticipants",
-                    new[] { new SqlParameter("@ticket_id", ticketId) });
+                        new[] { new SqlParameter("@ticket_id", ticketId) });
 
                 if (ticketInfo != null && ticketInfo.Count > 0)
                 {
                     string displayTicketId = ticketInfo[0]["ticket_id"].ToString();
                     string subject = ticketInfo[0]["subject"].ToString();
                     long customerId = Convert.ToInt64(ticketInfo[0]["customer_id"]);
-                    string statusName = newStatus == 3 ? "Resolved" : "Closed";
-
+                    string statusName = (newStatus == 3 ? "Resolved" : "Closed");
                     string message = $"<h3>Ticket Status Updated</h3>" +
-                                   $"<p><strong>Ticket ID:</strong> {displayTicketId}</p>" +
-                                   $"<p><strong>Subject:</strong> {subject}</p>" +
-                                   $"<p><strong>New Status:</strong> {statusName}</p>";
+                                     $"<p><strong>Ticket ID:</strong> {displayTicketId}</p>" +
+                                     $"<p><strong>Subject:</strong> {subject}</p>" +
+                                     $"<p><strong>New Status:</strong> {statusName}</p>";
 
+                    // Notify customer of status change
                     _notificationService.SendNotificationWithEmail(customerId, ticketId, 3,
                         $"Status Update: {displayTicketId}", message);
+
+                    // --- NEW: Notify all admins of status change ---
+                    var adminIds = _notificationService.GetAllAdminIds();  // You should implement this to return a list of admin user IDs
+
+                    string adminMsg = $"<h3>Ticket Status Changed</h3>" +
+                                      $"<p><strong>Ticket ID:</strong> {displayTicketId}</p>" +
+                                      $"<p><strong>Subject:</strong> {subject}</p>" +
+                                      $"<p><strong>New Status:</strong> {statusName}</p>";
+
+                    foreach (var adminId in adminIds)
+                    {
+                        _notificationService.SendNotificationWithEmail(adminId, ticketId, 5, // Use a code like 5 for admin notifications
+                            $"Ticket Status Changed: {displayTicketId}", adminMsg);
+                    }
                 }
 
                 return Json(new { success = true });
@@ -241,6 +255,18 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             }
         }
 
+        public List<long> GetAllAdminIds()
+        {
+            try
+            {
+                var result = _databaseHelper.ExecuteStoredProcedure("sp_GetAdmins", null);
+                return result?.Select(r => Convert.ToInt64(r["id"])).ToList() ?? new List<long>();
+            }
+            catch
+            {
+                return new List<long>();
+            }
+        }
 
 
         [HttpGet]

@@ -71,6 +71,13 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                     { logindata.Role, DatabaseHelper.Encrypt(row["role"]?.ToString() ?? "") }
                 };
                 _cookieService.SetKeyValueInCookie("UI", loginDetail, 30);
+
+                var perameters = new SqlParameter[]
+               {
+                    new SqlParameter("@id", row["id"]?.ToString() ?? "")
+               };
+                _databaseHelper.ExecuteStoredProcedure("sp_savelogin_history", perameters);
+
                 return RedirectToAction("DashboardIndex", "Dashboard");
             }
             else
