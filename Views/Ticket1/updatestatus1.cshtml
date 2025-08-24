@@ -1,0 +1,42 @@
+﻿@model List<onlineTicketing.Models.TicketViewModel>
+
+@{
+    ViewData["Title"] = "Assigned Tickets";
+}
+
+<h2>Assigned Tickets</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Ticket ID</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Created At</th>
+            <th>Assigned To</th>
+            <th>Deadline</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.TicketId</td>
+                <td>@item.Subject</td>
+                <td>@item.Status</td>
+                <td>@item.Priority</td>
+                <td>@item.CreatedAt.ToShortDateString()</td>
+                <td>@item.AssignedToName</td>
+                <td>@item.Deadline?.ToShortDateString()</td>
+                <td>
+                <td>
+                    @*  <a asp-action="UpdateStatus" asp-route-id="@item.Id">UpdateStatus</a> *@
+                    <a asp-controller="Ticket" asp-action="UpdateStatus" asp-route-id="@item.Id">Update Status</a>
+
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,122 @@
+﻿@model onlineTicketing.Models.TicketDetailsViewModel
+
+@{
+    ViewData["Title"] = "Ticket Details";
+}
+
+<h2>Ticket Details</h2>
+
+@* Display success or error messages from TempData *@
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (Model.Ticket != null)
+{
+    @* Main card displaying ticket information *@
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">@Model.Ticket.Subject</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Ticket ID: @Model.Ticket.TicketId</h6>
+            <p class="card-text"><strong>Priority:</strong> @Model.Ticket.Priority</p>
+            <p class="card-text"><strong>Category:</strong> @Model.Ticket.Category</p>
+            <p class="card-text"><strong>Description:</strong> @Model.Ticket.Description</p>
+            <p class="card-text"><small class="text-muted">Created At: @Model.Ticket.CreatedAt.ToShortDateString()</small></p>
+
+            @* Form for Admins to assign a ticket. This section remains unchanged. *@
+            <form asp-action="UpdateTicket" method="post" class="mt-3">
+                <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+                <div class="form-group row mt-2">
+                    <label for="supporterId" class="col-sm-2 col-form-label"><strong>Assign To:</strong></label>
+                    <div class="col-sm-4">
+                        <select id="supporterId" name="supporterId" class="form-control">
+                            <option value="">-- Select Supporter --</option>
+                            @foreach (var supporter in Model.Supporters)
+                            {
+                                <option value="@supporter.Value">@supporter.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row mt-2">
+                    <label for="priorityCode" class="col-sm-2 col-form-label"><strong>Priority:</strong></label>
+                    <div class="col-sm-4">
+                        <select id="priorityCode" name="priorityCode" class="form-control">
+                            <option value="">-- Select Priority --</option>
+                            @foreach (var option in Model.PriorityOptions)
+                            {
+                                <option value="@option.Value">@option.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row mt-2">
+                    <label for="deadline" class="col-sm-2 col-form-label"><strong>Deadline:</strong></label>
+                    <div class="col-sm-4">
+                        <input type="date" id="deadline" name="deadline" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-group row mt-3">
+                    <div class="col-sm-12">
+                        <button type="submit" class="btn btn-primary">Assign Ticket</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <hr />
+
+    @* Conditional form for Supporters to update status and add notes *@
+    @if (Model.IsSupporter)
+    {
+        <h2>Update Ticket Status & Add Note</h2>
+        <form asp-action="UpdateTicket" method="post">
+            <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+
+            <div class="form-group">
+                <label for="newStatus">Change Status:</label>
+                <select name="newStatus" id="newStatus" class="form-control" required>
+                    <option value="">-- Select Status --</option>
+                    @* Loop through the status options from the ViewModel *@
+                    @foreach (var status in Model.StatusOptions)
+                    {
+                        @* Pre-select the current ticket status in the dropdown *@
+                        <option value="@status.Value" selected="@(status.Text == Model.Ticket.Status)">@status.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="note">Add a Note:</label>
+                <textarea name="note" id="note" class="form-control" rows="3" placeholder="Enter notes here..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Update Ticket</button>
+        </form>
+    }
+
+    <hr />
+
+
+    <a asp-action="Index">Back to List</a>
+
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+        Ticket details could not be loaded. Please ensure you are accessing a valid ticket.
+    </div>
+}
