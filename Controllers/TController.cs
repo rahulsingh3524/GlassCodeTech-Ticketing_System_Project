@@ -32,7 +32,7 @@ namespace onlineTicketing.Controllers
 
         public IActionResult Index()
         {
-            //long userId = 1;
+            
             var tickets = _ticketDal.GetUnassignedTicketList();
             return View(tickets);
         }
