@@ -1,6 +1,6 @@
 ﻿
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Data.SqlClient;
+//using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using onlineTicketing.Models;
 using System;
@@ -555,24 +555,24 @@ namespace onlineTicketing.Data
         //Dashboard
 
         // Method for Admin Dashboard Counts
-        public AdminDashboardViewModel GetAdminDashboardCounts()
-        {
-            var model = new AdminDashboardViewModel();
-            using (SqlConnection con = new SqlConnection(_connectionString))
-            {
-                SqlCommand cmd = new SqlCommand("sp_Tickets_GetTotalAssignedAndUnassignedCounts", con);
-                cmd.CommandType = CommandType.StoredProcedure;
-                con.Open();
-                SqlDataReader rdr = cmd.ExecuteReader();
-                if (rdr.Read())
-                {
-                    model.TotalTickets = (int)rdr["TotalTickets"];
-                    model.AssignedTickets = (int)rdr["AssignedTickets"];
-                    model.UnassignedTickets = (int)rdr["UnassignedTickets"];
-                }
-            }
-            return model;
-        }
+        //public AdminDashboardViewModel GetAdminDashboardCounts()
+        //{
+        //    var model = new AdminDashboardViewModel();
+        //    using (SqlConnection con = new SqlConnection(_connectionString))
+        //    {
+        //        SqlCommand cmd = new SqlCommand("sp_Tickets_GetTotalAssignedAndUnassignedCounts", con);
+        //        cmd.CommandType = CommandType.StoredProcedure;
+        //        con.Open();
+        //        SqlDataReader rdr = cmd.ExecuteReader();
+        //        if (rdr.Read())
+        //        {
+        //            model.TotalTickets = (int)rdr["TotalTickets"];
+        //            model.AssignedTickets = (int)rdr["AssignedTickets"];
+        //            model.UnassignedTickets = (int)rdr["UnassignedTickets"];
+        //        }
+        //    }
+        //    return model;
+        //}
 
         // Method to get all assigned tickets for Admin Dashboard
         public List<TicketViewModel> GetAllAssignedTicketsForAdmin()

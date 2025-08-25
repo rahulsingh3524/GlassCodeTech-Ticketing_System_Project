@@ -1,30 +1,13 @@
-﻿//namespace GlassCodeTech_Ticketing_System_Project.Models
-//{
-//    public class TicketThreadViewModel
-//    {
-//    }
-//}
-
-
-
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc.Rendering;
-
-namespace onlineTicketing.Models
+﻿namespace onlineTicketing.Models
 {
-    public class TicketDetailsViewModel
+    public class TicketThreadViewModel
     {
-        public TicketViewModel Ticket { get; set; }
-        public List<TicketThreadViewModel> Threads { get; set; }
-        public AddMessageViewModel NewMessage { get; set; }
-        public List<SelectListItem> StatusOptions { get; set; }
-        public List<SelectListItem> Supporters { get; set; }
-
-        public List<SelectListItem> PriorityOptions { get; set; }
-
-        public bool IsSupporter { get; set; }
-        public List<TicketHistoryViewModel> History { get; set; } // <-- NEW
+        public int Id { get; set; }
+        public int TicketId { get; set; }
+        public long SenderId { get; set; }
+        public string SenderName { get; set; }
+        public string Message { get; set; }
+        public string AttachmentUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }
-
-
