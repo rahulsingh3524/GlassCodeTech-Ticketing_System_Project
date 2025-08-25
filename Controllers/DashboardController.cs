@@ -9,7 +9,7 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
     {
         private readonly CookieService _cookieService;
         private readonly DatabaseHelper _databaseHelper;
-        public LoginDetail logindata;
+        public LoginDetail logindata; 
         public DashboardController(CookieService cookieService, DatabaseHelper databaseHelper)
         {
             _cookieService = cookieService;
