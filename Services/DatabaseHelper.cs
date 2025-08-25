@@ -13,7 +13,7 @@ public class DatabaseHelper
     private readonly string _connectionString;
 
     // Use secure key/iv in production, ideally via environment variables or secure storage!
-    private static readonly string EncryptionKey = "zQ5nD7pRf3KwL8tVeG0aY2uXiJ6vG4Nb"; // 32 chars for AES-256
+    private static readonly string EncryptionKey = "zQ5nD7pRf3KwL8tVeG0aY2uXiJ6vG4Nb"; // 32 chars  for AES-256
     private static readonly string IVString = "bXc9vYt5rUe2tO7k"; // 16 chars for AES
 
     public DatabaseHelper(IConfiguration configuration)
