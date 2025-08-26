@@ -350,6 +350,42 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             return View(thread);
         }
 
+        //[HttpPost]
+        //public IActionResult AddThreadReply(int ticketId, string message, IFormFile attachment)
+        //{
+        //    var cookieDict = _cookieService.GetDictionaryFromCookie("UI");
+        //    if (cookieDict == null || !cookieDict.ContainsKey(logindata.Id))
+        //        return RedirectToAction("Login", "Login");
+
+        //    long senderId = long.Parse(DatabaseHelper.Decrypt(cookieDict[logindata.Id]));
+        //    string attachmentUrl = null;
+
+        //    // Handle file upload (optional)
+        //    if (attachment != null && attachment.Length > 0)
+        //    {
+        //        var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ticket-attachments");
+        //        if (!Directory.Exists(uploadsDir))
+        //            Directory.CreateDirectory(uploadsDir);
+
+        //        // Clean file name, add timestamp to avoid collisions
+        //        var fileName = Path.GetFileNameWithoutExtension(attachment.FileName);
+        //        var fileExt = Path.GetExtension(attachment.FileName);
+        //        var newFileName = $"{fileName}_{DateTime.Now.Ticks}{fileExt}";
+        //        var filePath = Path.Combine(uploadsDir, newFileName);
+
+        //        using (var stream = new FileStream(filePath, FileMode.Create))
+        //        {
+        //            attachment.CopyTo(stream);
+        //        }
+
+        //        // Store relative URL to DB (for serving via MVC static files)
+        //        attachmentUrl = $"/ticket-attachments/{newFileName}";
+        //    }
+
+        //    AddTicketThreadMessage(ticketId, senderId, message, attachmentUrl);
+        //    return RedirectToAction("Thread", new { id = ticketId });
+        //}
+
         [HttpPost]
         public IActionResult AddThreadReply(int ticketId, string message, IFormFile attachment)
         {
@@ -367,7 +403,6 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                 if (!Directory.Exists(uploadsDir))
                     Directory.CreateDirectory(uploadsDir);
 
-                // Clean file name, add timestamp to avoid collisions
                 var fileName = Path.GetFileNameWithoutExtension(attachment.FileName);
                 var fileExt = Path.GetExtension(attachment.FileName);
                 var newFileName = $"{fileName}_{DateTime.Now.Ticks}{fileExt}";
@@ -378,13 +413,81 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                     attachment.CopyTo(stream);
                 }
 
-                // Store relative URL to DB (for serving via MVC static files)
                 attachmentUrl = $"/ticket-attachments/{newFileName}";
             }
 
+            // Add thread message
             AddTicketThreadMessage(ticketId, senderId, message, attachmentUrl);
+
+            // **NEW: Send notifications to all relevant parties**
+            SendThreadReplyNotifications(ticketId, senderId, message);
+
             return RedirectToAction("Thread", new { id = ticketId });
         }
+
+        // **NEW METHOD: Send notifications for thread replies**
+        private void SendThreadReplyNotifications(int ticketId, long senderId, string message)
+        {
+            try
+            {
+                // Get ticket information to determine who to notify
+                var ticketInfo = _databaseHelper.ExecuteStoredProcedure("sp_GetTicketParticipants",
+                    new[] { new SqlParameter("@ticket_id", ticketId) });
+
+                if (ticketInfo != null && ticketInfo.Count > 0)
+                {
+                    string displayTicketId = ticketInfo[0]["ticket_id"].ToString();
+                    string subject = ticketInfo[0]["subject"].ToString();
+                    long customerId = Convert.ToInt64(ticketInfo[0]["customer_id"]);
+                    long? assignedSupporterId = ticketInfo[0]["assigned_supporter_id"] != DBNull.Value ?
+                        Convert.ToInt64(ticketInfo[0]["assigned_supporter_id"]) : null;
+
+                    // Get sender information to exclude them from notifications
+                    var senderInfo = _databaseHelper.ExecuteStoredProcedure("sp_GetUserById",
+                        new[] { new SqlParameter("@user_id", senderId) });
+                    string senderName = senderInfo?.Count > 0 ? senderInfo[0]["username"].ToString() : "Unknown User";
+
+                    string notificationMessage = $"<h3>New Reply in Ticket Thread</h3>" +
+                                               $"<p><strong>Ticket ID:</strong> {displayTicketId}</p>" +
+                                               $"<p><strong>Subject:</strong> {subject}</p>" +
+                                               $"<p><strong>Reply from:</strong> {senderName}</p>" +
+                                               $"<p><strong>Message:</strong> {message.Substring(0, Math.Min(message.Length, 200))}...</p>";
+
+                    // Notify customer (if sender is not the customer)
+                    if (senderId != customerId)
+                    {
+                        _notificationService.SendNotificationWithEmail(customerId, ticketId, 6, // 6 = thread reply notification type
+                            $"New Reply: {displayTicketId}", notificationMessage);
+                    }
+
+                    // Notify assigned supporter (if exists and sender is not the supporter)
+                    if (assignedSupporterId.HasValue && senderId != assignedSupporterId.Value)
+                    {
+                        _notificationService.SendNotificationWithEmail(assignedSupporterId.Value, ticketId, 6,
+                            $"New Reply: {displayTicketId}", notificationMessage);
+                    }
+
+                    // Notify all admins (except if sender is admin)
+                    var adminIds = GetAllAdminIds();
+                    foreach (var adminId in adminIds)
+                    {
+                        if (senderId != adminId) // Don't notify the sender
+                        {
+                            _notificationService.SendNotificationWithEmail(adminId, ticketId, 6,
+                                $"New Reply: {displayTicketId}", notificationMessage);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't break the thread reply functionality
+                // You can add logging here
+            }
+        }
+
+       
+
 
         public void AddTicketThreadMessage(int ticketId, long senderId, string message, string attachmentUrl = null)
         {
