@@ -1,0 +1,109 @@
+﻿@model List<Dictionary<string,object>>
+@{
+    ViewData["Title"] = "Ticket Thread";
+    var ticketId = ViewBag.TicketId;
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Ticket Conversation</h3>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+
+            @if (Model.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No messages yet. Be the first to start the conversation!
+                </div>
+            }
+            else
+            {
+                <div class="conversation-thread" style="max-height: 500px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background: #f8f9fa;">
+                    @foreach (var msg in Model)
+                    {
+                        var senderRole = msg.ContainsKey("sender_role") && msg["sender_role"] != null ? msg["sender_role"].ToString().ToLower() : "customer";
+                        var badgeClass = senderRole == "admin" ? "bg-danger" : senderRole == "support" ? "bg-warning" : "bg-primary";
+                        var senderName = msg.ContainsKey("sender_name") && msg["sender_name"] != null ? msg["sender_name"].ToString() : $"User #{msg["sender_id"]}";
+
+                        <div class="message-item border rounded mb-3 p-3" style="background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge @badgeClass me-2 text-capitalize">@senderRole</span>
+                                <span class="fw-semibold">@senderName</span>
+                                <span class="text-muted small ms-auto">@string.Format("{0:g}", msg["created_at"])</span>
+                            </div>
+                            <div class="message-content mb-2">@msg["message"]</div>
+                            @{
+                                var attachmentUrl = msg.ContainsKey("attachment_url") && msg["attachment_url"] != null && msg["attachment_url"] != DBNull.Value
+                                ? msg["attachment_url"].ToString()
+                                : null;
+                            }
+                            @if (!string.IsNullOrWhiteSpace(attachmentUrl))
+                            {
+                                <div class="attachment-link">
+                                    <i class="bi bi-paperclip text-primary"></i>
+                                    <a href="@attachmentUrl" target="_blank" class="text-primary text-decoration-none">
+                                        📎 View Attachment
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Reply Form -->
+            <div class="reply-section mt-4 p-3" style="background: #f8f9fa; border-radius: 8px;">
+                <h5 class="mb-3">
+                    <i class="bi bi-chat-dots text-primary"></i> Add a Reply
+                </h5>
+                <form method="post" asp-action="AddThreadReply" enctype="multipart/form-data">
+                    <input type="hidden" name="ticketId" value="@ticketId" />
+                    <div class="mb-3">
+                        <textarea class="form-control" name="message" rows="4" required
+                                  placeholder="Type your reply here..." style="resize: vertical;"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <input type="file" name="attachment" class="form-control"
+                               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif" />
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Optional: Attach a file (PDF, Word, images, etc. - Max 10MB)
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-send"></i> Send Reply
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .conversation-thread::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .conversation-thread::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .conversation-thread::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+        .conversation-thread::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+    .message-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    }
+</style>

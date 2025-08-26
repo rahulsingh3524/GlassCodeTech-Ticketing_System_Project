@@ -2,7 +2,10 @@
     ViewData["Title"] = "Admin Dashboard";
     var assignments = ViewBag.AssignmentList as List<Dictionary<string, object>>;
     var statusCounts = ViewBag.StatusCounts as List<Dictionary<string, object>>;
+    var allTickets = ViewBag.AllTickets as List<Dictionary<string, object>>;
 }
+
+
 
 <div class="container mt-5">
     <h2 class="mb-4">Admin Dashboard</h2>
@@ -40,7 +43,7 @@
 
     <div>
         <h4>Tickets Assigned to Supporters</h4>
-        <table class="table table-bordered">
+        <table id="assignmentsTable" class="table table-bordered table-hover">
             <thead>
                 <tr>
                     <th>Ticket ID</th>
@@ -49,7 +52,7 @@
                     <th>Status</th>
                     <th>Priority</th>
                     <th>Deadline</th>
-                    <th>View</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -57,15 +60,49 @@
                 {
                     foreach (var ticket in assignments)
                     {
-                        <tr>
+                        string statusLower = ticket["status"].ToString().ToLower();
+                        string rowClass = "";
+                        string badgeClass = "secondary";
+                        switch (statusLower)
+                        {
+                            case "open":
+                                rowClass = "table-success";
+                                badgeClass = "success";
+                                break;
+                            case "closed":
+                                rowClass = "table-danger";
+                                badgeClass = "danger";
+                                break;
+                            case "resolved":
+                                rowClass = "table-primary";
+                                badgeClass = "primary";
+                                break;
+                            case "in_progress":
+                                rowClass = "table-warning";
+                                badgeClass = "warning";
+                                break;
+                            case "cancel":
+                                rowClass = "table-secondary";
+                                badgeClass = "secondary";
+                                break;
+                        }
+                        <tr class="@rowClass">
                             <td>@ticket["ticket_id"]</td>
                             <td>@ticket["subject"]</td>
                             <td>@ticket["supporter_name"]</td>
-                            <td>@ticket["status"]</td>
+                            <td>
+                                <span class="badge bg-@badgeClass text-capitalize">
+                                    @ticket["status"]
+                                </span>
+                            </td>
                             <td>@ticket["priority"]</td>
                             <td>@ticket["deadline"]</td>
                             <td>
                                 <a href="@Url.Action("Details", "Ticket", new { id = ticket["id"] })" class="btn btn-sm btn-outline-info">View</a>
+                                <a href="@Url.Action("Thread", "Ticket", new { id = ticket["id"] })" class="btn btn-sm btn-primary ms-1">
+                                    Thread
+                                </a>
+
                             </td>
                         </tr>
                     }
@@ -78,11 +115,9 @@
         </table>
     </div>
 
-    @{
-        var allTickets = ViewBag.AllTickets as List<Dictionary<string, object>>;
-    }
     <h4 class="mt-4">All Tickets</h4>
-    <table class="table table-bordered">
+
+    <table id="ticketsTable" class="table table-bordered table-hover">
         <thead>
             <tr>
                 <th>Ticket ID</th>
@@ -92,7 +127,7 @@
                 <th>Priority</th>
                 <th>Deadline</th>
                 <th>Assign</th>
-                <th>View</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -100,18 +135,43 @@
             {
                 foreach (var ticket in allTickets)
                 {
-                    // Lowercase for comparison
-                    string status = ticket["status"].ToString().ToLower();
+                    string statusLower = ticket["status"].ToString().ToLower();
                     string supporterName = ticket["supporter_name"].ToString();
-
-                    // Only allow assign or reassign if ticket is open or in_progress
-                    bool canAssign = status == "open" || status == "in_progress";
-
-                    <tr>
+                    bool canAssign = statusLower == "open" || statusLower == "in_progress";
+                    string rowClass = "";
+                    string badgeClass = "secondary";
+                    switch (statusLower)
+                    {
+                        case "open":
+                            rowClass = "table-success";
+                            badgeClass = "success";
+                            break;
+                        case "closed":
+                            rowClass = "table-danger";
+                            badgeClass = "danger";
+                            break;
+                        case "resolved":
+                            rowClass = "table-primary";
+                            badgeClass = "primary";
+                            break;
+                        case "in_progress":
+                            rowClass = "table-warning";
+                            badgeClass = "warning";
+                            break;
+                        case "cancel":
+                            rowClass = "table-secondary";
+                            badgeClass = "secondary";
+                            break;
+                    }
+                    <tr class="@rowClass">
                         <td>@ticket["ticket_id"]</td>
                         <td>@ticket["subject"]</td>
                         <td>@supporterName</td>
-                        <td>@ticket["status"]</td>
+                        <td>
+                            <span class="badge bg-@badgeClass text-capitalize">
+                                @ticket["status"]
+                            </span>
+                        </td>
                         <td>@ticket["priority"]</td>
                         <td>@ticket["deadline"]</td>
                         <td>
@@ -133,6 +193,10 @@
                         <td>
                             <a href="@Url.Action("Details", "Ticket", new { id = ticket["id"] })"
                                class="btn btn-sm btn-outline-info">View</a>
+                            <a href="@Url.Action("Thread", "Ticket", new { id = ticket["id"] })" class="btn btn-sm btn-primary ms-1">
+                                Thread
+                            </a>
+
                         </td>
                     </tr>
                 }
@@ -144,13 +208,86 @@
         </tbody>
     </table>
 </div>
+
 @section Scripts {
+
+    <style>
+        .dataTables_filter input {
+            width: 320px !important;
+            max-width: 100%;
+            display: inline-block;
+        }
+
+        .dt-buttons.btn-group {
+            margin-bottom: 10px;
+        }
+    </style>
+
     <script>
-        // Auto-reload dashboard every 30 seconds
-        setInterval(function() {
+        setInterval(function () {
             window.location.reload();
         }, 30000);
 
-        console.log('Dashboard will auto-refresh every 30 seconds');
+        // $(function () {
+        //     $('#ticketsTable').DataTable({
+        //         retrieve: true,
+        //         responsive: true,
+        //         lengthChange: true,
+        //         autoWidth: false,
+        //         dom: '<"row mb-2"<"col-sm-4"B><"col-sm-4"l><"col-sm-4"f>>' +
+        //              '<"row"<"col-sm-12"tr>>' +
+        //              '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+        //         buttons: [
+        //             'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
+        //         ],
+        //         language: {
+        //             search: "Search:"
+        //         }
+        //     });
+        //     $('#assignmentsTable').DataTable({
+        //         retrieve: true,
+        //         responsive: true,
+        //         lengthChange: true,
+        //         autoWidth: false,
+        //         dom: '<"row mb-2"<"col-sm-4"B><"col-sm-4"l><"col-sm-4"f>>' +
+        //              '<"row"<"col-sm-12"tr>>' +
+        //              '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+        //         buttons: [
+        //             'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
+        //         ]
+        //     });
+
+        //     $('.dataTables_wrapper .dt-buttons').css({'float':'left'});
+        // });
     </script>
+
+    <script>
+        $(function () {
+            // Helper function to ensure buttons bar is shown
+            function initDataTableWithButtons(selector) {
+                var tbl = $(selector).DataTable({
+                    retrieve: true,
+                    responsive: true,
+                    lengthChange: true,
+                    autoWidth: false,
+                    dom: '<"row mb-2"<"col-sm-4"B><"col-sm-4"l><"col-sm-4"f>>' +
+                         '<"row"<"col-sm-12"tr>>' +
+                         '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
+                    ]
+                });
+                // Attach buttons toolbars as in AdminLTE demo:
+                tbl.buttons().container().appendTo(
+                    $(selector + '_wrapper .col-sm-4:eq(0)')
+                );
+            }
+
+            initDataTableWithButtons('#ticketsTable');
+            initDataTableWithButtons('#assignmentsTable');
+
+            $('.dataTables_wrapper .dt-buttons').css({'float':'left'});
+        });
+    </script>
+
 }

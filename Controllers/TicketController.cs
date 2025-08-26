@@ -342,6 +342,67 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
 
             return RedirectToAction("DashboardIndex", "Dashboard");
         }
+        public IActionResult Thread(int id)
+        {
+            var thread = _databaseHelper.ExecuteStoredProcedure("sp_GetTicketThreadMessages",
+                           new[] { new SqlParameter("@ticket_id", id) });
+            ViewBag.TicketId = id;
+            return View(thread);
+        }
+
+        [HttpPost]
+        public IActionResult AddThreadReply(int ticketId, string message, IFormFile attachment)
+        {
+            var cookieDict = _cookieService.GetDictionaryFromCookie("UI");
+            if (cookieDict == null || !cookieDict.ContainsKey(logindata.Id))
+                return RedirectToAction("Login", "Login");
+
+            long senderId = long.Parse(DatabaseHelper.Decrypt(cookieDict[logindata.Id]));
+            string attachmentUrl = null;
+
+            // Handle file upload (optional)
+            if (attachment != null && attachment.Length > 0)
+            {
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ticket-attachments");
+                if (!Directory.Exists(uploadsDir))
+                    Directory.CreateDirectory(uploadsDir);
+
+                // Clean file name, add timestamp to avoid collisions
+                var fileName = Path.GetFileNameWithoutExtension(attachment.FileName);
+                var fileExt = Path.GetExtension(attachment.FileName);
+                var newFileName = $"{fileName}_{DateTime.Now.Ticks}{fileExt}";
+                var filePath = Path.Combine(uploadsDir, newFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    attachment.CopyTo(stream);
+                }
+
+                // Store relative URL to DB (for serving via MVC static files)
+                attachmentUrl = $"/ticket-attachments/{newFileName}";
+            }
+
+            AddTicketThreadMessage(ticketId, senderId, message, attachmentUrl);
+            return RedirectToAction("Thread", new { id = ticketId });
+        }
+
+        public void AddTicketThreadMessage(int ticketId, long senderId, string message, string attachmentUrl = null)
+        {
+            var parameters = new[]
+            {
+        new SqlParameter("@ticket_id", ticketId),
+        new SqlParameter("@sender_id", senderId),
+        new SqlParameter("@message", message),
+        new SqlParameter("@attachment_url", (object)attachmentUrl ?? DBNull.Value)
+    };
+            _databaseHelper.ExecuteStoredProcedure("sp_AddTicketThreadMessage", parameters);
+        }
+
+        public List<Dictionary<string, object>> GetTicketThreadMessages(int ticketId)
+        {
+            var parameters = new[] { new SqlParameter("@ticket_id", ticketId) };
+            return _databaseHelper.ExecuteStoredProcedure("sp_GetTicketThreadMessages", parameters);
+        }
 
 
     }

@@ -4,8 +4,14 @@
 }
 
 <div class="container mt-5">
-    <h2>Closed &amp; Resolved Tickets</h2>
-    <table class="table table-bordered mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Closed &amp; Resolved Tickets</h2>
+        <a href="@Url.Action("DashboardIndex", "Dashboard")" class="btn btn-primary">
+            <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+        </a>
+    </div>
+
+    <table id="closedTicketsTable" class="table table-bordered table-hover mt-3">
         <thead>
             <tr>
                 <th>Ticket ID</th>
@@ -21,13 +27,43 @@
             {
                 foreach (var ticket in tickets)
                 {
-                    <tr>
+                    // Color code rows and badges
+                    string statusLower = ticket["status"].ToString().ToLower();
+                    string rowClass = "";
+                    string badgeClass = "secondary";
+                    switch (statusLower)
+                    {
+                        case "open":
+                            rowClass = "table-success";
+                            badgeClass = "success";
+                            break;
+                        case "closed":
+                            rowClass = "table-danger";
+                            badgeClass = "danger";
+                            break;
+                        case "resolved":
+                            rowClass = "table-primary";
+                            badgeClass = "primary";
+                            break;
+                        case "in_progress":
+                            rowClass = "table-warning";
+                            badgeClass = "warning";
+                            break;
+                        case "cancel":
+                            rowClass = "table-secondary";
+                            badgeClass = "secondary";
+                            break;
+                    }
+                    <tr class="@rowClass">
                         <td>@ticket["ticket_id"]</td>
                         <td>@ticket["subject"]</td>
-                        <td>@ticket["status"]</td>
+                        <td>
+                            <span class="badge bg-@badgeClass text-capitalize">
+                                @ticket["status"]
+                            </span>
+                        </td>
                         <td>@ticket["created_at"]</td>
                         <td>@ticket["deadline"]</td>
-                     @*    <td>@ticket.ContainsKey("closed_at") ? ticket["closed_at"] : ""</td> *@
                         <td>
                             <a href="@Url.Action("Details", "Ticket", new { id = ticket["id"] })" class="btn btn-sm btn-secondary">View</a>
                         </td>
@@ -41,3 +77,55 @@
         </tbody>
     </table>
 </div>
+
+@section Scripts {
+    <style>
+        .dataTables_filter input {
+            width: 320px !important;
+        }
+
+        .dt-buttons.btn-group {
+            margin-bottom: 10px;
+        }
+
+        tr.table-success td {
+            background-color: #d1e7dd !important;
+        }
+
+        tr.table-danger td {
+            background-color: #f8d7da !important;
+        }
+
+        tr.table-primary td {
+            background-color: #cfe2ff !important;
+        }
+
+        tr.table-warning td {
+            background-color: #fff3cd !important;
+        }
+
+        tr.table-secondary td {
+            background-color: #e2e3e5 !important;
+        }
+    </style>
+    <script>
+        $(function () {
+            var tbl = $('#closedTicketsTable').DataTable({
+                retrieve: true,
+                responsive: true,
+                lengthChange: true,
+                autoWidth: false,
+                dom: '<"row mb-2"<"col-sm-4"B><"col-sm-4"l><"col-sm-4"f>>' +
+                     '<"row"<"col-sm-12"tr>>' +
+                     '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
+                ],
+                order: [],
+                language: { search: "Search:" }
+            });
+            tbl.buttons().container().appendTo($('#closedTicketsTable_wrapper .col-sm-4:eq(0)'));
+            $('.dataTables_wrapper .dt-buttons').css({ 'float': 'left' });
+        });
+    </script>
+}
