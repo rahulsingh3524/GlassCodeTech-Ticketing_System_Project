@@ -107,8 +107,11 @@
                                     <option value="3">Resolved</option>
                                     <option value="4">Closed</option>
                                 </select>
-                                <button class="btn btn-sm btn-outline-primary"
-                                        onclick="changeTicketStatus(@ticket["id"])">
+
+                                <textarea id="remark_@ticket["id"]" class="form-control mt-2" placeholder="Add a remark..."></textarea>   @* RemarkAdded *@
+                                
+                                
+                                        <button class="btn btn-sm btn-outline-primary" onclick="updateTicket(@ticket["id"])">
                                     Update
                                 </button>
                             }
@@ -127,7 +130,6 @@
         </tbody>
     </table>
 </div>
-
 @section Scripts {
     <style>
         .dataTables_filter input {
@@ -185,23 +187,32 @@
                 alert("Please select a status to update.");
                 return;
             }
-            if (!confirm("Change status of this ticket?")) return;
+
+            if (!confirm("Are you sure you want to update the ticket status?")) {
+                return;
+            }
 
             $.ajax({
-                url: '@Url.Action("ChangeStatus", "Ticket")',
+                url: '@Url.Action("UpdateTicketStatus", "Dashboard")',
                 type: 'POST',
-                data: { ticketId: ticketId, newStatus: newStatus },
+                data: {
+                    ticketId: ticketId,
+                    newStatus: newStatus,
+                    remark: remark
+                },
                 success: function(response) {
                     if (response.success) {
-                        location.reload();
+                        // Optionally update status and controls live
+                        location.reload(); // simplest way (or refresh just the cell with JS)
                     } else {
-                        alert(response.message || "Status not changed.");
+                        alert(response.message || "An error occurred.");
                     }
                 },
                 error: function() {
-                    alert("Error changing status. Please try again.");
+                    alert("Error updating ticket. Please try again.");
                 }
             });
         }
     </script>
+}
 }

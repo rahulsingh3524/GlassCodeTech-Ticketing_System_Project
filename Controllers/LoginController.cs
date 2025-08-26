@@ -18,19 +18,127 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             _cookieService = cookieService;
             logindata = new LoginDetail();
         }
-        
-        // GET: /Login
-        // Check for existing cookie and show partial view or login page
+
+        //GET: /Login
+        //Check for existing cookie and show partial view or login page
+        //       [HttpGet]
+        //        public IActionResult Login()
+        //        {
+        //            var dict = _cookieService.GetDictionaryFromCookie("UI");
+        //            if (dict != null && dict.ContainsKey(logindata.Username)) // "B" is username key
+        //            {
+        //                string encryptedUsername = dict[logindata.Username];
+        //                string username = DatabaseHelper.Decrypt(encryptedUsername);
+        //                return PartialView("_PasswordOnlyLoginPartial", username);
+
+        //            }
+        //            else
+        //            {
+        //                return View();
+        //            }
+        //        }
+
+        //        // POST: /Login
+        //        // Full login with username and password
+        //        [HttpPost]
+        //        public IActionResult Login(string username, string password)
+        //        {
+        //            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        //            {
+        //                ModelState.AddModelError("", "Username and password are required.");
+        //                return View();
+        //            }
+
+        //            string encryptedPassword = DatabaseHelper.Encrypt(password);
+        //            var parameters = new SqlParameter[]
+        //            {
+        //                new SqlParameter("@username", username),
+        //                new SqlParameter("@password_hash", encryptedPassword)
+        //            };
+
+        //            var result = _databaseHelper.ExecuteStoredProcedure("VerifyUser", parameters);
+
+        //            if (result != null && result.Count > 0)
+        //            {
+        //                var row = result[0];
+        //                var loginDetail = new Dictionary<string, string>
+        //                {
+        //                    { logindata.Id, DatabaseHelper.Encrypt(row["id"]?.ToString() ?? "") },
+        //                    { logindata.Username, DatabaseHelper.Encrypt(row["username"]?.ToString() ?? "") },
+        //                    { logindata.Email, DatabaseHelper.Encrypt(row["email"]?.ToString() ?? "") },
+        //                    { logindata.CompanyName, DatabaseHelper.Encrypt(row["company_name"]?.ToString() ?? "") },
+        //                    { logindata.Position, DatabaseHelper.Encrypt(row["position"]?.ToString() ?? "") },
+        //                    { logindata.Role, DatabaseHelper.Encrypt(row["role"]?.ToString() ?? "") }
+        //                };
+        //                _cookieService.SetKeyValueInCookie("UI", loginDetail, 30);
+
+        //                var perameters = new SqlParameter[]
+        //               {
+        //                    new SqlParameter("@id", row["id"]?.ToString() ?? "")
+        //               };
+        //                _databaseHelper.ExecuteStoredProcedure("sp_savelogin_history", perameters);
+
+        //                return RedirectToAction("DashboardIndex", "Dashboard");
+        //            }
+        //            else
+        //            {
+        //                ModelState.AddModelError("", "Invalid username or password.");
+        //                return View();
+        //            }
+        //        }
+
+
+
+        //        // POST: /Login/PasswordOnly
+        //        [HttpPost]
+        //        public IActionResult PasswordOnlyLogin(string password)
+        //        {
+        //            var dict = _cookieService.GetDictionaryFromCookie("UI");
+        //            if (dict == null || !dict.ContainsKey(logindata.Username))
+        //            {
+        //                return RedirectToAction("Login");
+        //            }
+
+        //            string username = DatabaseHelper.Decrypt(dict[logindata.Username]);
+        //            string encryptedPassword = DatabaseHelper.Encrypt(password);
+        //            var parameters = new SqlParameter[]
+        //            {
+        //                new SqlParameter("@username", username),
+        //                new SqlParameter("@password_hash", encryptedPassword)
+        //            };
+
+        //            var result = _databaseHelper.ExecuteStoredProcedure("VerifyUser", parameters);
+
+        //            if (result != null && result.Count > 0)
+        //            {
+        //                return RedirectToAction("DashboardIndex", "Dashboard");
+        //            }
+        //            else
+        //            {
+        //                ModelState.AddModelError("", "Invalid password.");
+        //                return PartialView("_PasswordOnlyLoginPartial", username);
+        //            }
+        //        }
+
+        //        // POST: /Logout
+        //        [HttpPost]
+        //        public IActionResult Logout()
+        //        {
+        //            _cookieService.DeleteCookie("UI");
+        //            return RedirectToAction("Login");
+        //        }
+        //    }
+        //}
+
         [HttpGet]
         public IActionResult Login()
         {
             var dict = _cookieService.GetDictionaryFromCookie("UI");
-            if (dict != null && dict.ContainsKey(logindata.Username)) // "B" is username key
+            if (dict != null && dict.ContainsKey(logindata.Username))
             {
                 string encryptedUsername = dict[logindata.Username];
                 string username = DatabaseHelper.Decrypt(encryptedUsername);
                 return PartialView("_PasswordOnlyLoginPartial", username);
-
             }
             else
             {
@@ -49,45 +157,51 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                 return View();
             }
 
-            string encryptedPassword = DatabaseHelper.Encrypt(password);
+            // Step 1: Call the new stored procedure to get the user by username.
             var parameters = new SqlParameter[]
             {
-                new SqlParameter("@username", username),
-                new SqlParameter("@password_hash", encryptedPassword)
+                new SqlParameter("@username", username)
             };
 
-            var result = _databaseHelper.ExecuteStoredProcedure("VerifyUser", parameters);
+            var result = _databaseHelper.ExecuteStoredProcedure("GetUserByUsername", parameters);
 
             if (result != null && result.Count > 0)
             {
                 var row = result[0];
-                var loginDetail = new Dictionary<string, string>
+                string storedPasswordHash = row["password_hash"]?.ToString();
+
+                // Step 2: Decrypt the stored hash and compare it to the plain-text password.
+                string decryptedPassword = DatabaseHelper.Decrypt(storedPasswordHash);
+
+                if (decryptedPassword == password)
                 {
-                    { logindata.Id, DatabaseHelper.Encrypt(row["id"]?.ToString() ?? "") },
-                    { logindata.Username, DatabaseHelper.Encrypt(row["username"]?.ToString() ?? "") },
-                    { logindata.Email, DatabaseHelper.Encrypt(row["email"]?.ToString() ?? "") },
-                    { logindata.CompanyName, DatabaseHelper.Encrypt(row["company_name"]?.ToString() ?? "") },
-                    { logindata.Position, DatabaseHelper.Encrypt(row["position"]?.ToString() ?? "") },
-                    { logindata.Role, DatabaseHelper.Encrypt(row["role"]?.ToString() ?? "") }
-                };
-                _cookieService.SetKeyValueInCookie("UI", loginDetail, 30);
+                    // Passwords match, proceed with login
+                    var loginDetail = new Dictionary<string, string>
+                    {
+                        { logindata.Id, DatabaseHelper.Encrypt(row["id"]?.ToString() ?? "") },
+                        { logindata.Username, DatabaseHelper.Encrypt(row["username"]?.ToString() ?? "") },
+                        { logindata.Email, DatabaseHelper.Encrypt(row["email"]?.ToString() ?? "") },
+                        { logindata.CompanyName, DatabaseHelper.Encrypt(row["company_name"]?.ToString() ?? "") },
+                        { logindata.Position, DatabaseHelper.Encrypt(row["position"]?.ToString() ?? "") },
+                        { logindata.Role, DatabaseHelper.Encrypt(row["role"]?.ToString() ?? "") }
+                    };
+                    _cookieService.SetKeyValueInCookie("UI", loginDetail, 30);
 
-                var perameters = new SqlParameter[]
-               {
-                    new SqlParameter("@id", row["id"]?.ToString() ?? "")
-               };
-                _databaseHelper.ExecuteStoredProcedure("sp_savelogin_history", perameters);
+                    var saveHistoryParams = new SqlParameter[]
+                    {
+                        new SqlParameter("@id", row["id"]?.ToString() ?? "")
+                    };
+                    _databaseHelper.ExecuteStoredProcedure("sp_savelogin_history", saveHistoryParams);
 
-                return RedirectToAction("DashboardIndex", "Dashboard");
+                    return RedirectToAction("DashboardIndex", "Dashboard");
+                }
             }
-            else
-            {
-                ModelState.AddModelError("", "Invalid username or password.");
-                return View();
-            }
+
+            // If no user found or password verification failed
+            ModelState.AddModelError("", "Invalid username or password.");
+            return View();
         }
 
-        // POST: /Login/PasswordOnly
         [HttpPost]
         public IActionResult PasswordOnlyLogin(string password)
         {
@@ -98,27 +212,28 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             }
 
             string username = DatabaseHelper.Decrypt(dict[logindata.Username]);
-            string encryptedPassword = DatabaseHelper.Encrypt(password);
+
             var parameters = new SqlParameter[]
             {
-                new SqlParameter("@username", username),
-                new SqlParameter("@password_hash", encryptedPassword)
+                new SqlParameter("@username", username)
             };
-
-            var result = _databaseHelper.ExecuteStoredProcedure("VerifyUser", parameters);
+            var result = _databaseHelper.ExecuteStoredProcedure("GetUserByUsername", parameters);
 
             if (result != null && result.Count > 0)
             {
-                return RedirectToAction("DashboardIndex", "Dashboard");
+                var storedPasswordHash = result[0]["password_hash"]?.ToString();
+                string decryptedPassword = DatabaseHelper.Decrypt(storedPasswordHash);
+
+                if (decryptedPassword == password)
+                {
+                    return RedirectToAction("DashboardIndex", "Dashboard");
+                }
             }
-            else
-            {
-                ModelState.AddModelError("", "Invalid password.");
-                return PartialView("_PasswordOnlyLoginPartial", username);
-            }
+
+            ModelState.AddModelError("", "Invalid password.");
+            return PartialView("_PasswordOnlyLoginPartial", username);
         }
 
-        // POST: /Logout
         [HttpPost]
         public IActionResult Logout()
         {

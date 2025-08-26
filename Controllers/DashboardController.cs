@@ -84,17 +84,25 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             ViewBag.Tickets = assignedTickets;
             ViewBag.StatusCounts = statusCounts;
         }
+    
+
         [HttpPost]
-        public IActionResult ChangeStatus(int ticketId, int newStatus)
+        public IActionResult UpdateTicketStatus(int ticketId, int newStatus, string remark)         /*Method for Updating the new Status and remark*/
         {
-            // (You should add admin auth checks here)
+
             var parameters = new[]
             {
         new SqlParameter("@ticket_id", ticketId),
-        new SqlParameter("@new_status", newStatus)
+        new SqlParameter("@new_status", newStatus),
+        
+        new SqlParameter("@remark", string.IsNullOrEmpty(remark) ? (object)DBNull.Value : remark)
     };
+
             _databaseHelper.ExecuteStoredProcedure("sp_AdminChangeTicketStatus", parameters);
-            return RedirectToAction("AdminDashboard", "Dashboard");
+
+            // Return a JSON response for AJAX success handling
+            return Json(new { success = true });
+            
         }
 
     }

@@ -4,7 +4,8 @@
 
 <div class="container mt-5">
     <h2 class="mb-4">Raise a New Ticket</h2>
-    <form method="post" asp-action="Create">
+    @* <form method="post" asp-action="Create enctype=" multipart /form-data"> *@
+    <form method="post" asp-action="Create" enctype="multipart/form-data">
         <div class="mb-3">
             <label class="form-label">Subject</label>
             <input type="text" name="subject" class="form-control" required />
@@ -31,6 +32,12 @@
                 <option value="3">High</option>
             </select>
         </div>
+
+        <div class="mb-3">
+            <label for="attachment" class="form-label">Attachment (Optional)</label>
+            <input type="file" name="attachment" id="attachment" class="form-control" accept="image/*" />
+        </div>
+
         <button type="submit" class="btn btn-primary w-100">Submit Ticket</button>
     </form>
 </div>
