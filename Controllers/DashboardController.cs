@@ -35,6 +35,7 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                     SupporterDashboard();
                     return View("SupporterDashboard");
                 case "1":
+                    CustomerDashboard();
                     return View("CustomerDashboard");
                 default:
                     return RedirectToAction("Login", "Login"); // Unknown role, force re-login
@@ -57,6 +58,18 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             ViewBag.AssignedTickets = assignedTickets?[0]?["count"] ?? 0;
             ViewBag.AssignmentList = assignmentList;
             ViewBag.StatusCounts = statusCounts;
+        }
+        
+        public void CustomerDashboard()
+        {
+            var cookieDict = _cookieService.GetDictionaryFromCookie("UI");
+            long customerId = long.Parse(DatabaseHelper.Decrypt(cookieDict[logindata.Id]));
+
+            var openTicketscount = _databaseHelper.ExecuteStoredProcedure("sp_CustomerOpenTickets", new[] { new SqlParameter("@customer_id", customerId) });
+            var closedTicketscount = _databaseHelper.ExecuteStoredProcedure("sp_CustomerclosedorresolvedTickets", new[] { new SqlParameter("@customer_id", customerId) });
+
+            ViewBag.openTicketscount = openTicketscount?[0]?["count"] ?? 0;
+            ViewBag.closedTicketscount = closedTicketscount?[0]?["count"] ?? 0;
         }
         public void SupporterDashboard()
         {

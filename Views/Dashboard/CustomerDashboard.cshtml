@@ -14,20 +14,18 @@
                 </div>
             </div>
         </div>
-
         <div class="col-md-4 mb-3">
             <div class="card h-100 shadow-sm">
                 <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                    <h5 class="card-title mb-3">Track Current Tickets</h5>
+                    <h5 class="card-title mb-3">Track Current Tickets (@ViewBag.openTicketscount)</h5>
                     <a href="@Url.Action("Track", "Ticket")" class="btn btn-info w-100">Track Ticket</a>
                 </div>
             </div>
         </div>
-
         <div class="col-md-4 mb-3">
             <div class="card h-100 shadow-sm">
                 <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                    <h5 class="card-title mb-3">Closed/Resolved Tickets</h5>
+                    <h5 class="card-title mb-3">Closed/Resolved Tickets (@ViewBag.closedTicketscount)</h5>
                     <a href="@Url.Action("Closed", "Ticket")" class="btn btn-secondary w-100">View Closed Tickets</a>
                 </div>
             </div>
@@ -36,7 +34,7 @@
 
     <div class="mt-4">
         <h4>Your Recent Tickets</h4>
-        <table class="table table-bordered">
+        <table id="recentTicketsTable" class="table table-bordered table-hover">
             <thead>
                 <tr>
                     <th>Ticket ID</th>
@@ -51,36 +49,108 @@
             </tbody>
         </table>
     </div>
+</div>
 
-    @section Scripts {
-        <script>
-            $(document).ready(function () {
-                $.ajax({
-                    type: "GET",
-                    url: '@Url.Action("GetRecentTickets", "Ticket")',
-                    success: function (response) {
-                        var tb = $("#recentTicketsBody");
-                        tb.empty();
-                        if (response.success && response.data && response.data.length > 0) {
-                            $.each(response.data, function (i, ticket) {
-                                var viewUrl = '@Url.Action("Details", "Ticket")' + '?id=' + ticket.id;
-                                var row = "<tr>" +
-                                    "<td>" + ticket.ticket_id + "</td>" +
-                                    "<td>" + ticket.subject + "</td>" +
-                                    "<td>" + ticket.status + "</td>" +
-                                    "<td>" + ticket.created_at + "</td>" +
-                                    "<td><a href='" + viewUrl + "' class='btn btn-sm btn-outline-info'>View</a></td>" +
-                                    "</tr>";
-                                tb.append(row);
-                            });
-                        } else {
-                            tb.append('<tr><td colspan="5" class="text-center">No recent tickets found.</td></tr>');
-                        }
-                    },
-                    error: function () {
-                        $("#recentTicketsBody").html('<tr><td colspan="5" class="text-danger text-center">Failed to load tickets.</td></tr>');
-                    }
-                });
+@section Scripts {
+    <style>
+        .dataTables_filter input {
+            width: 320px !important;
+        }
+
+        .dt-buttons.btn-group {
+            margin-bottom: 10px;
+        }
+
+        tr.table-success td {
+            background-color: #d1e7dd !important;
+        }
+
+        tr.table-danger td {
+            background-color: #f8d7da !important;
+        }
+
+        tr.table-primary td {
+            background-color: #cfe2ff !important;
+        }
+
+        tr.table-warning td {
+            background-color: #fff3cd !important;
+        }
+
+        tr.table-secondary td {
+            background-color: #e2e3e5 !important;
+        }
+    </style>
+    <script>
+        function getStatusClasses(status) {
+            if (!status) return { row: "", badge: "secondary" };
+            status = status.toLowerCase();
+            switch (status) {
+                case "open":        return { row: "table-success", badge: "success" };
+                case "closed":      return { row: "table-danger",  badge: "danger"  };
+                case "resolved":    return { row: "table-primary", badge: "primary" };
+                case "in_progress": return { row: "table-warning", badge: "warning" };
+                case "cancel":      return { row: "table-secondary", badge: "secondary" };
+                default:            return { row: "", badge: "secondary" };
+            }
+        }
+
+        // DataTable initializer for perfect AdminLTE look
+        function initRecentTicketsTable() {
+            var tbl = $('#recentTicketsTable').DataTable({
+                retrieve: true,
+                responsive: true,
+                lengthChange: true,
+                autoWidth: false,
+                dom: '<"row mb-2"<"col-sm-4"B><"col-sm-4"l><"col-sm-4"f>>' +
+                     '<"row"<"col-sm-12"tr>>' +
+                     '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
+                ],
+                order: [],
+                language: { search: "Search:" }
             });
-        </script>
-    }
+            tbl.buttons().container().appendTo($('#recentTicketsTable_wrapper .col-sm-4:eq(0)'));
+            $('.dataTables_wrapper .dt-buttons').css({ 'float': 'left' });
+        }
+
+        $(document).ready(function () {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetRecentTickets", "Ticket")',
+                success: function (response) {
+                    var tb = $("#recentTicketsBody");
+                    tb.empty();
+                    if (response.success && response.data && response.data.length > 0) {
+                        $.each(response.data, function (i, ticket) {
+                            var stat = getStatusClasses(ticket.status);
+                            var viewUrl = '@Url.Action("Details", "Ticket")' + '?id=' + ticket.id;
+                            var ThreadUrl = '@Url.Action("Thread", "Ticket")' + '?id=' + ticket.id;
+
+                            var row = "<tr class='" + stat.row + "'>" +
+                                "<td>" + ticket.ticket_id + "</td>" +
+                                "<td>" + ticket.subject + "</td>" +
+                                "<td><span class='badge bg-" + stat.badge + " text-capitalize'>" + ticket.status + "</span></td>" +
+                                "<td>" + ticket.created_at + "</td>" +
+                                "<td><a href='" + viewUrl + "' class='btn btn-sm btn-outline-info'>View</a></td>" +
+                                "<td><a href='" + ThreadUrl + "' class='btn btn-sm btn-primary ms-1'>Thread</a></td>" +
+                                "</tr>";
+                            tb.append(row);
+                        });
+                    } else {
+                        tb.append('<tr><td colspan="5" class="text-center">No recent tickets found.</td></tr>');
+                    }
+                    // DataTables initialize after load ensures export/search shows!
+                    if ( $.fn.dataTable.isDataTable('#recentTicketsTable') ) {
+                        $('#recentTicketsTable').DataTable().clear().draw();
+                    }
+                    initRecentTicketsTable();
+                },
+                error: function () {
+                    $("#recentTicketsBody").html('<tr><td colspan="5" class="text-danger text-center">Failed to load tickets.</td></tr>');
+                }
+            });
+        });
+    </script>
+}

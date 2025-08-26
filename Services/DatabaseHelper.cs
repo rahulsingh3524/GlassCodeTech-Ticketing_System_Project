@@ -50,6 +50,24 @@ public class DatabaseHelper
         return result;
     }
 
+        public void AddTicketThreadMessage(int ticketId, int senderId, string message, string attachmentUrl = null)
+        {
+            var parameters = new[]
+            {
+        new SqlParameter("@ticket_id", ticketId),
+        new SqlParameter("@sender_id", senderId),
+        new SqlParameter("@message", message),
+        new SqlParameter("@attachment_url", (object)attachmentUrl ?? DBNull.Value)
+    };
+            ExecuteStoredProcedure("sp_AddTicketThreadMessage", parameters);
+        }
+
+        public List<Dictionary<string, object>> GetTicketThreadMessages(int ticketId)
+        {
+            var parameters = new[] { new SqlParameter("@ticket_id", ticketId) };
+            return ExecuteStoredProcedure("sp_GetTicketThreadMessages", parameters);
+        }
+
         // 2. Encrypt a string (returns Base64)
         public static string Encrypt(string plainText)
         {
