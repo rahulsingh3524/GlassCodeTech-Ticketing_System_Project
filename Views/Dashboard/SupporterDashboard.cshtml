@@ -73,8 +73,11 @@
                                     <option value="3">Resolved</option>
                                     <option value="4">Closed</option>
                                 </select>
-                                <button class="btn btn-sm btn-outline-primary"
-                                        onclick="changeTicketStatus(@ticket["id"])">
+
+                                <textarea id="remark_@ticket["id"]" class="form-control mt-2" placeholder="Add a remark..."></textarea>   @* RemarkAdded *@
+                                
+                                
+                                        <button class="btn btn-sm btn-outline-primary" onclick="updateTicket(@ticket["id"])">
                                     Update
                                 </button>
                             }
@@ -95,33 +98,44 @@
         </tbody>
     </table>
 </div>
-@section Scripts {
+
+
+    @section Scripts {
     <script>
-        function changeTicketStatus(ticketId) {
-            var dropdown = document.getElementById('status_' + ticketId);
-            var newStatus = dropdown.value;
+        function updateTicket(ticketId) {
+            var newStatus = $('#status_' + ticketId).val();
+            var remark = $('#remark_' + ticketId).val();
+
             if (!newStatus) {
                 alert("Please select a status to update.");
                 return;
             }
-            if (!confirm("Change status of this ticket?")) return;
+
+            if (!confirm("Are you sure you want to update the ticket status?")) {
+                return;
+            }
 
             $.ajax({
-                url: '@Url.Action("ChangeStatus", "Ticket")',
+                url: '@Url.Action("UpdateTicketStatus", "Dashboard")',
                 type: 'POST',
-                data: { ticketId: ticketId, newStatus: newStatus },
+                data: {
+                    ticketId: ticketId,
+                    newStatus: newStatus,
+                    remark: remark
+                },
                 success: function(response) {
                     if (response.success) {
-                        // Optionally update status and controls live
-                        location.reload(); // simplest way (or refresh just the cell with JS)
+                        alert("Ticket updated successfully!");
+                        location.reload(); // Reload to reflect changes
                     } else {
-                        alert(response.message || "Status not changed.");
+                        alert(response.message || "An error occurred.");
                     }
                 },
                 error: function() {
-                    alert("Error changing status. Please try again.");
+                    alert("Error updating ticket. Please try again.");
                 }
             });
         }
     </script>
+}
 }
