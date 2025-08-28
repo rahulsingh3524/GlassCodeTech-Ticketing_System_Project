@@ -24,24 +24,7 @@
             @RenderBody()
         </main>
     </div>
-    <div class="notification-container">
-        <button id="notificationBell" class="btn btn-link position-relative" type="button" aria-label="Show notifications">
-            <i class="bi bi-bell-fill"></i>
-            <span id="notificationCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
-        </button>
-
-        <div id="notificationDropdown" class="notification-dropdown"
-             style="display:none; max-height:420px; overflow-y:auto;">
-            <div class="bg-primary bg-opacity-10 py-2 px-3 rounded-top">
-                <span class="fw-semibold text-primary">Notifications</span>
-            </div>
-            <div id="notificationList"></div>
-            <div class="notification-divider"></div>
-            <div class="text-end px-3 pb-2">
-                <button id="markAllRead" class="btn btn-sm btn-outline-primary">Mark All Read</button>
-            </div>
-        </div>
-    </div>
+    
     <footer class="border-top footer text-muted mt-auto py-3">
         <div class="container text-center">
             &copy; 2025 - GlassCodeTech_Ticketing_System_Project - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
@@ -74,69 +57,87 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/register-validation.js"></script>
 
-   
-        <script>
-            $(document).ready(function() {
-                loadNotifications();
 
-                setInterval(loadNotifications, 30000);
 
-                $('#notificationBell').click(function(e) {
-                    $('#notificationDropdown').toggle();
-                    e.stopPropagation();
-                });
+    <script>
+        $(document).ready(function () {
+            loadNotifications();
 
-                $('#markAllRead').click(function() {
-                    $.post('@Url.Action("MarkAllRead", "Notification")', function(response) {
-                        if (response.success) {
-                            $('#notificationCount').hide();
-                            $('#notificationList').html('<p class="text-center text-muted">No new notifications</p>');
-                        }
-                    });
-                });
+            // Auto-refresh notifications every 30s
+            setInterval(loadNotifications, 30000);
 
-                $(document).click(function(event) {
-                    if (!$(event.target).closest('.notification-container').length) {
-                        $('#notificationDropdown').hide();
+            // Toggle dropdown on bell click
+            $('#notificationBell').click(function (e) {
+                $('#notificationDropdown').toggle();
+                e.stopPropagation();
+            });
+
+            // Mark all read
+            $(document).on('click', '#markAllRead', function () {
+                $.post('@Url.Action("MarkAllRead", "Notification")', function (response) {
+                    if (response.success) {
+                        $('#notificationCount').hide();
+                        $('#notificationList').html(`
+                            <div class="notification-header">Notifications</div>
+                            <div class="notification-empty">No new notifications</div>
+                        `);
                     }
                 });
             });
 
-                    function loadNotifications() {
-            $.get('@Url.Action("GetUnread", "Notification")', function(response) {
+            // Hide dropdown when clicking outside
+            $(document).click(function (event) {
+                if (!$(event.target).closest('.notification-container').length) {
+                    $('#notificationDropdown').hide();
+                }
+            });
+        });
+
+        function loadNotifications() {
+            $.get('@Url.Action("GetUnread", "Notification")', function (response) {
                 if (response.success) {
                     var count = response.data.length;
                     if (count > 0) {
                         $('#notificationCount').text(count).show();
-                        var html = '';
-                        response.data.forEach(function(notification, idx) {
-                            html += `<div class="dropdown-item py-2 px-3" style="border-radius:8px;">
-                                        <div class="d-flex align-items-center mb-1">
-                                            <i class="bi bi-dot text-primary fs-5 me-2"></i>
-                                            <span class="fw-bold text-dark">${notification.notification_type_name}</span>
-                                        </div>
-                                        <div class="mb-1 text-secondary" style="font-size:0.98rem;">
-                                            ${(notification.message && notification.message.length > 120 ? notification.message.substring(0, 120) + '...' : notification.message || '')}
-                                        </div>
-                                        <div class="small text-muted text-end">
-                                            <i class="bi bi-clock"></i> ${new Date(notification.sent_at).toLocaleString()}
-                                        </div>
-                                     </div>`;
-                            // Add hr if NOT the last notification
-                            if (idx !== response.data.length - 1) {
-                                html += `<hr class="notification-separator"/>`;
-                            }
+
+                        var html = '<div class="notification-header">Notifications</div>';
+                        response.data.forEach(function (notification) {
+                            html += `
+                                <div class="notification-item">
+                                    <div class="notification-title">
+                                        <i class="bi bi-dot"></i> ${notification.notification_type_name}
+                                    </div>
+                                    <div class="notification-message">
+                                        ${(notification.message && notification.message.length > 120
+                                            ? notification.message.substring(0, 120) + '...'
+                                            : notification.message || '')}
+                                    </div>
+                                    <div class="notification-time">
+                                        <i class="bi bi-clock"></i> ${new Date(notification.sent_at).toLocaleString()}
+                                    </div>
+                                </div>`;
                         });
+
+                        html += `
+                            <div class="notification-footer">
+                                <button id="markAllRead" class="btn btn-outline-primary btn-sm">Mark All Read</button>
+                            </div>
+                        `;
+
                         $('#notificationList').html(html);
+
                     } else {
                         $('#notificationCount').hide();
-                        $('#notificationList').html('<div class="notification-empty">No new notifications</div>');
+                        $('#notificationList').html(`
+                            <div class="notification-header">Notifications</div>
+                            <div class="notification-empty">No new notifications</div>
+                        `);
                     }
                 }
             });
         }
+    </script>
 
-        </script>
 
     <link rel="stylesheet" href="~/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css" />
     <link rel="stylesheet" href="~/plugins/datatables-responsive/css/responsive.bootstrap4.min.css" />

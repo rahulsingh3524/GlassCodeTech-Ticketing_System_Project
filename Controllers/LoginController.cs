@@ -34,7 +34,13 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             }
             else
             {
-                return View();
+                var model = new LoginViewModel
+                {
+                    Username = string.Empty,
+                    Password = string.Empty,
+                    IsPasswordOnly = false
+                };
+                return View(model);
             }
         }
 
@@ -101,6 +107,7 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
 
             string username = DatabaseHelper.Decrypt(dict[logindata.Username]);
             string encryptedPassword = DatabaseHelper.Encrypt(password);
+            ViewBag.CurrentUserName = username;
             var parameters = new SqlParameter[]
             {
                         new SqlParameter("@username", username),
@@ -116,7 +123,13 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             else
             {
                 ModelState.AddModelError("", "Invalid password.");
-                return PartialView("_PasswordOnlyLoginPartial", username);
+
+                return View("Login", new LoginViewModel
+                {
+                    Username = username,
+                    IsPasswordOnly = true
+                });
+
             }
         }
 

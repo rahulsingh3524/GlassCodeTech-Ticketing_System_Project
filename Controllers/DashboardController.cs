@@ -49,6 +49,7 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             // Example stored procedure calls - you should create these SPs as needed
             var totalTickets = _databaseHelper.ExecuteStoredProcedure("sp_AdminTotalTickets", null);
             var assignedTickets = _databaseHelper.ExecuteStoredProcedure("sp_AdminAssignedTickets", null);
+            var unassignedTickets = _databaseHelper.ExecuteStoredProcedure("sp_AdminAssignedTickets", null);
             var assignmentList = _databaseHelper.ExecuteStoredProcedure("sp_AdminTicketAssignments", null);
             var statusCounts = _databaseHelper.ExecuteStoredProcedure("sp_AdminTicketStatusCounts", null);
             var allTickets = _databaseHelper.ExecuteStoredProcedure("sp_AdminAllTickets", null);
@@ -94,7 +95,6 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
             {
         new SqlParameter("@ticket_id", ticketId),
         new SqlParameter("@new_status", newStatus),
-        
         new SqlParameter("@remark", string.IsNullOrEmpty(remark) ? (object)DBNull.Value : remark)
     };
 

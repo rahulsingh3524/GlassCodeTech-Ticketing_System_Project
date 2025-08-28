@@ -81,7 +81,7 @@
 @section Scripts {
     <style>
         .dataTables_filter input {
-            width: 320px !important;
+            width: 200px !important;
         }
 
         .dt-buttons.btn-group {
@@ -115,11 +115,41 @@
                 responsive: true,
                 lengthChange: true,
                 autoWidth: false,
-                dom: '<"row mb-2"<"col-sm-4"B><"col-sm-4"l><"col-sm-4"f>>' +
-                     '<"row"<"col-sm-12"tr>>' +
-                     '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+                   dom: '<"row mb-2"<"col-sm-6 d-flex"B><"col-sm-3"l><"col-sm-3"f>>' +
+        '<"row"<"col-sm-12"tr>>' +
+        '<"row"<"col-sm-5"i><"col-sm-7"p>>',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
+                    {
+                        extend: 'copy',
+                        exportOptions: {
+                            columns: ':not(:last-child)'   // exclude last column (Action)
+                        }
+                    },
+                    {
+                        extend: 'csv',
+                        exportOptions: {
+                            columns: ':not(:last-child)'
+                        }
+                    },
+                    {
+                        extend: 'excel',
+                        exportOptions: {
+                            columns: ':not(:last-child)'
+                        }
+                    },
+                    {
+                        extend: 'pdf',
+                        exportOptions: {
+                            columns: ':not(:last-child)'
+                        }
+                    },
+                    {
+                        extend: 'print',
+                        exportOptions: {
+                            columns: ':not(:last-child)'
+                        }
+                    },
+                    'colvis'
                 ],
                 order: [],
                 language: { search: "Search:" }

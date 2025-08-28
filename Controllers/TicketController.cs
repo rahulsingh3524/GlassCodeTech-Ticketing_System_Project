@@ -202,15 +202,16 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
 
 
         [HttpPost]
-        public IActionResult ChangeStatus(int ticketId, int newStatus)
+        public IActionResult ChangeStatus(int ticketId, int newStatus, string remark)
         {
             try
             {
                 var parameters = new[]
-                {
-            new SqlParameter("@ticket_id", ticketId),
-            new SqlParameter("@new_status", newStatus)
-        };
+           {
+        new SqlParameter("@ticket_id", ticketId),
+        new SqlParameter("@new_status", newStatus),
+        new SqlParameter("@remark", string.IsNullOrEmpty(remark) ? (object)DBNull.Value : remark)
+    };
                 _databaseHelper.ExecuteStoredProcedure("sp_AdminChangeTicketStatus", parameters);
 
                 // Get ticket info (for customer notification and admin details)
@@ -226,7 +227,8 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                     string message = $"<h3>Ticket Status Updated</h3>" +
                                      $"<p><strong>Ticket ID:</strong> {displayTicketId}</p>" +
                                      $"<p><strong>Subject:</strong> {subject}</p>" +
-                                     $"<p><strong>New Status:</strong> {statusName}</p>";
+                                     $"<p><strong>New Status:</strong> {statusName}</p>" +
+                                     $"<p><strong>Remark:</strong> {remark}</p>";
 
                     // Notify customer of status change
                     _notificationService.SendNotificationWithEmail(customerId, ticketId, 3,
@@ -238,7 +240,8 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                     string adminMsg = $"<h3>Ticket Status Changed</h3>" +
                                       $"<p><strong>Ticket ID:</strong> {displayTicketId}</p>" +
                                       $"<p><strong>Subject:</strong> {subject}</p>" +
-                                      $"<p><strong>New Status:</strong> {statusName}</p>";
+                                      $"<p><strong>New Status:</strong> {statusName}</p>" +
+                                      $"<p><strong>Remark:</strong> {remark}</p>";
 
                     foreach (var adminId in adminIds)
                     {
@@ -439,13 +442,16 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                     string displayTicketId = ticketInfo[0]["ticket_id"].ToString();
                     string subject = ticketInfo[0]["subject"].ToString();
                     long customerId = Convert.ToInt64(ticketInfo[0]["customer_id"]);
-                    long? assignedSupporterId = ticketInfo[0]["assigned_supporter_id"] != DBNull.Value ?
-                        Convert.ToInt64(ticketInfo[0]["assigned_supporter_id"]) : null;
+                    long? assignedSupporterId = ticketInfo[0]["supporter_id"] != DBNull.Value ?
+                        Convert.ToInt64(ticketInfo[0]["supporter_id"]) : null;
 
                     // Get sender information to exclude them from notifications
-                    var senderInfo = _databaseHelper.ExecuteStoredProcedure("sp_GetUserById",
-                        new[] { new SqlParameter("@user_id", senderId) });
-                    string senderName = senderInfo?.Count > 0 ? senderInfo[0]["username"].ToString() : "Unknown User";
+
+                    var dict = _cookieService.GetDictionaryFromCookie("UI");
+                    string senderName = DatabaseHelper.Decrypt(dict[logindata.Username]);
+                    //var senderInfo = _databaseHelper.ExecuteStoredProcedure("sp_GetUserById",
+                    //    new[] { new SqlParameter("@user_id", senderId) });
+                    //string senderName = senderInfo?.Count > 0 ? senderInfo[0]["username"].ToString() : "Unknown User";
 
                     string notificationMessage = $"<h3>New Reply in Ticket Thread</h3>" +
                                                $"<p><strong>Ticket ID:</strong> {displayTicketId}</p>" +
@@ -505,6 +511,39 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
         {
             var parameters = new[] { new SqlParameter("@ticket_id", ticketId) };
             return _databaseHelper.ExecuteStoredProcedure("sp_GetTicketThreadMessages", parameters);
+        }
+
+
+        [HttpGet]
+        public IActionResult TrackIndex(string statusCode, bool? isadmin)
+        {
+            var cookieDict = _cookieService.GetDictionaryFromCookie("UI");
+
+            // Check cookie and login
+            if (cookieDict == null)
+                return RedirectToAction("Login", "Login");
+
+            string Id = DatabaseHelper.Decrypt(cookieDict[logindata.Id]);
+
+            var parameters = new[]
+            {
+        new SqlParameter("@id", Id),
+        new SqlParameter("@status", statusCode)
+    };
+
+            List<Dictionary<string, object>> tickets;
+
+            // Null-safe check for admin
+            if (isadmin.HasValue && isadmin.Value)
+            {
+                tickets = _databaseHelper.ExecuteStoredProcedure("sp_TrackCustomerTicketsForAdmin", parameters);
+            }
+            else
+            {
+                tickets = _databaseHelper.ExecuteStoredProcedure("sp_TrackCustomerTickets", parameters);
+            }
+
+            return View("TeackI", tickets);
         }
 
 

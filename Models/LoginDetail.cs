@@ -23,6 +23,10 @@
     {
         public string Username { get; set; }
         public string Password { get; set; }
+
+        // Extra flag to switch to PasswordOnly view
+        public bool IsPasswordOnly { get; set; }
     }
+
 
 }

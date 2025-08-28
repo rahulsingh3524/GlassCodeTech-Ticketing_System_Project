@@ -18,11 +18,15 @@
                 {
                     <p><strong>Closed At:</strong> @ticket["closed_at"]</p>
                 }
+                @if (ticket.ContainsKey("remark") && ticket["remark"] != null)
+                {
+                    <p><strong>Remark:</strong> @ticket["remark"]</p>
+                }
                 @if (ticket.ContainsKey("attachment") && ticket["attachment"] != null && !string.IsNullOrEmpty(ticket["attachment"].ToString()))
                 {
                     <p>
                         <strong>Attachment:</strong>
-                        <a href="@ticket["attachment"]" target="_blank">Download</a>
+                        <a href="@ticket["attachment"]" target="_blank">View</a>
                     </p>
                 }
             </div>
