@@ -15,6 +15,7 @@
   <ItemGroup>
     <Folder Include="wwwroot\attachments\" />
     <Folder Include="wwwroot\ticket-attachments\" />
+    <Folder Include="wwwroot\uploads\ticket-attachments\" />
   </ItemGroup>
 
 </Project>
